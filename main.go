@@ -19,7 +19,12 @@ const EXAMPLES = "  reple spawn 'bash --noprofile --norc -i'\n  reple eval < tes
 var FIFO_PATH string = strings.Join([]string{os.TempDir(), "reple"}, string(os.PathSeparator))
 
 func main() {
-	switch os.Args[1] {
+	command := ""
+	if len(os.Args) > 1 {
+		command = os.Args[1]
+	}
+
+	switch command {
 	case "spawn":
 		checkArgsNumber(2)
 		syscall.Mkfifo(FIFO_PATH, 0640)
