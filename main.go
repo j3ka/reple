@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/creack/pty"
+	"golang.org/x/term"
 )
 
 const USAGE = "  reple spawn {command}\n  reple eval < {path_to_file}\n  {stdin} | reple eval"
@@ -39,6 +40,13 @@ func main() {
 }
 
 func spawn(command string, args []string) {
+
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
+
 	cmd := exec.Command(command, args...)
 	ptmx, err := pty.Start(cmd)
 	processError(err)
@@ -51,7 +59,12 @@ func spawn(command string, args []string) {
 	pipeReader := bufio.NewReader(pipe)
 
 	go func() {
-		_, _ = io.Copy(os.Stdout, ptmx)
+		_, err = io.Copy(os.Stdout, ptmx)
+		if err != nil {
+			term.Restore(int(os.Stdin.Fd()), oldState)
+			ptmx.Close()
+			os.Exit(0)
+		}
 	}()
 	go func() {
 		_, _ = io.Copy(ptmx, pipeReader)
@@ -88,9 +101,8 @@ func parseSpawnCommand(rawCommand string) (string, []string) {
 }
 
 func checkArgsNumber(num int) {
-	if len(os.Args) < num + 1 {
+	if len(os.Args) < num+1 {
 		usage()
 		os.Exit(1)
 	}
 }
-
