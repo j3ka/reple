@@ -22,7 +22,7 @@ reple eval < my_script.sh
 ### Kakoune:
 ```shell
 define-command reple-eval %{
-        %sh{echo "$kak_selection" | reple eval}
+        evaluate-commands %sh{echo "$kak_selection" | reple eval}
 }
 map global normal <A-ret> ":reple-eval<ret>" # Alt + Enter to send selection to reple
 ```
@@ -35,7 +35,7 @@ map global normal <A-ret> ":reple-eval<ret>" # Alt + Enter to send selection to 
 "A-ret" = ":pipe-to reple eval"
 ```
 ### Lite-XL:
-I've experimented with lite-xl and created little plugin for reple: [reple.lua](https://github.com/j3ka/litexl-reple/blob/master/reple.lua)
+I've experimented with the lite-xl and created little plugin for reple: [reple.lua](https://github.com/j3ka/litexl-reple/blob/master/reple.lua)
 
 ## Installation
 ```shell
