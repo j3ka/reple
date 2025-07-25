@@ -18,6 +18,25 @@ echo 'ls -la' | reple eval
 reple eval < my_script.sh
 ```
 
+## Configuration examples
+### Kakoune:
+```shell
+define-command reple-eval %{
+        %sh{echo "$kak_selection" | reple eval}
+}
+map global normal <A-ret> ":reple-eval<ret>" # Alt + Enter to send selection to reple
+```
+### Helix:
+```toml
+[keys.normal]
+"A-ret" = ":pipe-to reple eval"
+
+[keys.select]
+"A-ret" = ":pipe-to reple eval"
+```
+### Lite-XL:
+I've experimented with lite-xl and created little plugin for reple: [reple.lua](https://github.com/j3ka/litexl-reple/blob/master/reple.lua)
+
 ## Installation
 ```shell
 go install github.com/j3ka/reple@latest
