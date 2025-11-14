@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"syscall"
 
@@ -47,8 +48,24 @@ func spawn(command string, args []string) {
 	}
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
 
+	// Get current terminal size
+	width, height, err := term.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		// Fallback to reasonable defaults if we can't get terminal size
+		width, height = 80, 24
+	}
+
 	cmd := exec.Command(command, args...)
-	ptmx, err := pty.Start(cmd)
+
+	// Create PTY with proper terminal dimensions
+	winsize := &pty.Winsize{
+		Rows: uint16(height),
+		Cols: uint16(width),
+		X:    0,
+		Y:    0,
+	}
+
+	ptmx, err := pty.StartWithSize(cmd, winsize)
 	processError(err)
 	defer func() { _ = ptmx.Close() }()
 
@@ -57,6 +74,17 @@ func spawn(command string, args []string) {
 	defer pipe.Close()
 
 	pipeReader := bufio.NewReader(pipe)
+
+	// Handle terminal resize signals
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGWINCH)
+	go func() {
+		for range ch {
+			if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
+				log.Printf("error resizing pty: %s", err)
+			}
+		}
+	}()
 
 	go func() {
 		_, err = io.Copy(os.Stdout, ptmx)
