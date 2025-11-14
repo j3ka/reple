@@ -56,7 +56,7 @@ func spawn(command string, args []string) {
 	}
 
 	cmd := exec.Command(command, args...)
-	
+
 	// Create PTY with proper terminal dimensions
 	winsize := &pty.Winsize{
 		Rows: uint16(height),
@@ -64,7 +64,7 @@ func spawn(command string, args []string) {
 		X:    0,
 		Y:    0,
 	}
-	
+
 	ptmx, err := pty.StartWithSize(cmd, winsize)
 	processError(err)
 	defer func() { _ = ptmx.Close() }()
